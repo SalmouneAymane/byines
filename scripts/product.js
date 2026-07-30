@@ -382,6 +382,7 @@ function addToCart() {
             setTimeout(() => {
                 addToCartBtn.innerHTML = originalText;
                 addToCartBtn.style.backgroundColor = '';
+                
                 addToCartBtn.style.color = '';
                 addToCartBtn.disabled = false;
             }, 2000);
