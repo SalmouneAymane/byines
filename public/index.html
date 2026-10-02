@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#F7F5F0]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Byines — Timeless Elegance & Modest Fashion</title>
+    <meta name="description" content="Redefining modest fashion through timeless elegance and contemporary silhouettes. Handcrafted Abayas, fine Scarfs, and curated collections.">
+    <!-- Google Fonts: Noto Serif & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        obsidian: '#2C2926',
+                        warmbg: '#F7F5F0',
+                        cardbg: '#EFECE6',
+                        borderline: '#E5E2DC',
+                        muted: '#7A7672',
+                    },
+                    fontFamily: {
+                        serif: ['"Noto Serif"', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar matching Byines Warm Neutral Aesthetic */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F7F5F0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D5D0C5;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2C2926;
+        }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #D5D0C5 #F7F5F0;
+        }
+    </style>
+</head>
+<body class="h-full font-sans antialiased text-[#2C2926] bg-[#F7F5F0] flex flex-col min-h-screen">
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-[#E5E2DC] sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <!-- Left: Brand Logo -->
+            <a href="#home" class="text-2xl md:text-3xl font-serif text-[#2C2926] tracking-tight font-normal">
+                Byines
+            </a>
+
+            <!-- Center: Navigation Links -->
+            <nav class="hidden md:flex items-center space-x-10 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2C2926]">
+                <a href="#shop" data-nav-link="shop" class="hover:opacity-60 transition-opacity">NEW ARRIVALS</a>
+                <a href="#collections" data-nav-link="collections" class="hover:opacity-60 transition-opacity">COLLECTIONS</a>
+                <a href="#about" data-nav-link="about" class="hover:opacity-60 transition-opacity">ABOUT</a>
+            </nav>
+
+            <!-- Right: Action Icons & Language Selector -->
+            <div class="flex items-center space-x-3 sm:space-x-5 text-[#2C2926]">
+                <!-- Language Selector Toggle -->
+                <div id="header-lang-selector" class="pr-2 border-r border-[#E5E2DC]"></div>
+                <!-- Search Icon -->
+                <button id="btn-toggle-search" aria-label="Search catalog" class="p-1 hover:opacity-60 transition-opacity">
+                    <svg class="w-5 h-5 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </button>
+
+                <!-- Shopping Bag Icon with Circular Badge -->
+                <button id="btn-open-cart" aria-label="Cart" class="p-1 hover:opacity-60 transition-opacity relative">
+                    <svg class="w-5 h-5 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                    <span class="cart-badge-count absolute -top-1.5 -right-2 w-4 h-4 bg-[#1A1817] text-white text-[9px] font-bold rounded-full flex items-center justify-center">0</span>
+                </button>
+
+                <!-- Customer Account Auth Modal Button -->
+                <button data-open-auth aria-label="Customer Account" class="p-1 hover:opacity-60 transition-opacity flex items-center space-x-1.5">
+                    <svg class="w-5 h-5 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <span data-user-nav-label class="text-[10px] uppercase font-bold tracking-wider hidden sm:inline-block">Sign In</span>
+                </button>
+
+                <!-- User Profile / Admin Link -->
+                <a href="/public/admin/index.html" aria-label="Admin Panel" title="Admin Portal" class="p-1 hover:opacity-60 transition-opacity">
+                    <svg class="w-5 h-5 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </a>
+            </div>
+        </div>
+
+        <!-- Hidden Quick Search Bar -->
+        <div id="quick-search-bar" class="hidden border-t border-[#E5E2DC] bg-[#F7F5F0] py-3 px-6">
+            <div class="max-w-xl mx-auto flex items-center space-x-3">
+                <input type="text" id="global-search-input" placeholder="Search abayas, scarfs, or collections..." class="flex-1 px-4 py-2 bg-white border border-[#E5E2DC] text-xs font-sans text-[#2C2926] focus:outline-none focus:border-[#2C2926]" />
+                <button id="btn-execute-search" class="bg-[#1A1817] text-white text-[10px] font-bold uppercase tracking-[0.15em] px-5 py-2 hover:bg-stone-800 transition-colors">
+                    Search
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dynamic SPA App Container -->
+    <main id="app" class="flex-1">
+        <!-- Views dynamically injected via storefront_router.js -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-[#E5E2DC] pt-16 pb-12 px-6 mt-auto text-[#2C2926]">
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 pb-12">
+            <!-- Column 1: Brand Info & Social -->
+            <div class="space-y-4">
+                <h3 class="font-serif text-2xl font-normal text-[#2C2926]">Byines</h3>
+                <p class="text-xs text-[#7A7672] leading-relaxed max-w-xs">
+                    Redefining modest fashion through timeless elegance and contemporary silhouettes.
+                </p>
+                <div class="flex items-center space-x-3 pt-2">
+                    <a href="#" class="w-7 h-7 rounded-full border border-[#E5E2DC] flex items-center justify-center text-xs text-[#7A7672] hover:border-[#2C2926] hover:text-[#2C2926] transition-colors">ig</a>
+                    <a href="#" class="w-7 h-7 rounded-full border border-[#E5E2DC] flex items-center justify-center text-xs text-[#7A7672] hover:border-[#2C2926] hover:text-[#2C2926] transition-colors">fb</a>
+                    <a href="#" class="w-7 h-7 rounded-full border border-[#E5E2DC] flex items-center justify-center text-xs text-[#7A7672] hover:border-[#2C2926] hover:text-[#2C2926] transition-colors">tk</a>
+                </div>
+            </div>
+
+            <!-- Column 2: Shopping -->
+            <div class="space-y-3">
+                <h4 class="text-[10px] uppercase tracking-[0.18em] text-[#2C2926] font-bold">SHOPPING</h4>
+                <ul class="space-y-2 text-xs text-[#7A7672]">
+                    <li><a href="#shop" class="hover:text-[#2C2926] transition-colors">New Arrivals</a></li>
+                    <li><a href="#shop" class="hover:text-[#2C2926] transition-colors">Best Sellers</a></li>
+                    <li><a href="#shop" class="hover:text-[#2C2926] transition-colors">Sale Items</a></li>
+                </ul>
+            </div>
+
+            <!-- Column 3: Customer Service -->
+            <div class="space-y-3">
+                <h4 class="text-[10px] uppercase tracking-[0.18em] text-[#2C2926] font-bold">CUSTOMER SERVICE</h4>
+                <ul class="space-y-2 text-xs text-[#7A7672]">
+                    <li><a href="#about" class="hover:text-[#2C2926] transition-colors">Contact Us</a></li>
+                    <li><a href="#about" class="hover:text-[#2C2926] transition-colors">Shipping & Returns</a></li>
+                    <li><a href="#about" class="hover:text-[#2C2926] transition-colors">Size Guide</a></li>
+                </ul>
+            </div>
+
+            <!-- Column 4: Newsletter -->
+            <div class="space-y-3">
+                <h4 class="text-[10px] uppercase tracking-[0.18em] text-[#2C2926] font-bold">NEWSLETTER</h4>
+                <p class="text-xs text-[#7A7672]">Join our mailing list for early access and editorial stories.</p>
+                <form id="newsletter-form" class="space-y-2 pt-1" onsubmit="event.preventDefault(); alert('Thank you for joining Byines mailing list.');">
+                    <input type="email" required placeholder="Email Address" class="w-full px-4 py-2 bg-[#F9F8F6] border border-[#E5E2DC] text-xs font-sans text-[#2C2926] focus:outline-none focus:border-[#2C2926]" />
+                    <button type="submit" class="w-full bg-[#1A1817] text-white text-[10px] font-bold uppercase tracking-[0.18em] py-2.5 hover:bg-stone-800 transition-colors">
+                        SUBSCRIBE
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Copyright Bottom -->
+        <div class="max-w-6xl mx-auto pt-6 border-t border-[#E5E2DC] flex flex-col sm:flex-row justify-between items-center text-[11px] text-[#7A7672] gap-2">
+            <div>
+                &copy; 2026 ByInes. All rights reserved.
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="#about" class="hover:text-[#2C2926]">Privacy Policy</a>
+                <a href="#about" class="hover:text-[#2C2926]">Terms of Service</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SPA Router Initialization -->
+    <script type="module">
+        import { StorefrontRouter } from '/public/js/storefront_router.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const router = new StorefrontRouter();
+            router.init();
+
+            // Quick search toggle listeners
+            const btnSearch = document.getElementById('btn-toggle-search');
+            const searchBar = document.getElementById('quick-search-bar');
+            const searchInput = document.getElementById('global-search-input');
+            const btnExecSearch = document.getElementById('btn-execute-search');
+
+            if (btnSearch && searchBar) {
+                btnSearch.onclick = () => {
+                    searchBar.classList.toggle('hidden');
+                    if (!searchBar.classList.contains('hidden')) {
+                        searchInput.focus();
+                    }
+                };
+            }
+
+            if (btnExecSearch && searchInput) {
+                btnExecSearch.onclick = () => {
+                    const q = searchInput.value.trim();
+                    if (q) {
+                        window.location.hash = `#shop?search=${encodeURIComponent(q)}`;
+                    }
+                };
+                searchInput.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        btnExecSearch.click();
+                    }
+                };
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#F9F9F9]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ByInes — Admin Control Panel</title>
+    <!-- Google Fonts: Noto Serif & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        obsidian: '#1B1B1B',
+                        surface: '#F9F9F9',
+                        line: '#EAEAEA',
+                        muted: '#5D5F5F',
+                    },
+                    fontFamily: {
+                        serif: ['"Noto Serif"', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar matching Byines Admin Theme */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F9F9F9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D5D0C5;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1B1B1B;
+        }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #D5D0C5 #F9F9F9;
+        }
+    </style>
+</head>
+<body class="h-full font-sans antialiased text-[#1B1B1B] flex overflow-hidden bg-[#F9F9F9]">
+
+    <!-- Sidebar (Sharp 90° corners, Monochromatic Dark) -->
+    <aside class="w-64 bg-obsidian text-stone-300 flex flex-col flex-shrink-0 border-r border-stone-800 rounded-none">
+        <!-- Brand Logo Header -->
+        <div class="p-6 border-b border-stone-800 flex items-center justify-between">
+            <div>
+                <span class="text-[10px] uppercase tracking-[0.15em] text-stone-400 font-semibold block">Store Management</span>
+                <h1 class="text-2xl font-serif font-normal text-white tracking-widest mt-1">BY INES</h1>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+            <a href="#dashboard" data-nav="dashboard" class="flex items-center space-x-3 px-4 py-3 rounded-none text-[11px] uppercase tracking-[0.1em] font-semibold transition-all">
+                <svg class="w-4 h-4 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="#categories" data-nav="categories" class="flex items-center space-x-3 px-4 py-3 rounded-none text-[11px] uppercase tracking-[0.1em] font-semibold transition-all">
+                <svg class="w-4 h-4 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                <span>Categories</span>
+            </a>
+            <a href="#collections" data-nav="collections" class="flex items-center space-x-3 px-4 py-3 rounded-none text-[11px] uppercase tracking-[0.1em] font-semibold transition-all">
+                <svg class="w-4 h-4 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                <span>Collections</span>
+            </a>
+            <a href="#products" data-nav="products" class="flex items-center space-x-3 px-4 py-3 rounded-none text-[11px] uppercase tracking-[0.1em] font-semibold transition-all">
+                <svg class="w-4 h-4 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                <span>Products & Stock</span>
+            </a>
+            <a href="#orders" data-nav="orders" class="flex items-center space-x-3 px-4 py-3 rounded-none text-[11px] uppercase tracking-[0.1em] font-semibold transition-all">
+                <svg class="w-4 h-4 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <span>Customer Orders</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer with Sign Out -->
+        <div class="p-4 border-t border-stone-800 space-y-3">
+            <div class="text-[10px] uppercase tracking-widest text-stone-500 flex items-center justify-between">
+                <span>ByInes Admin</span>
+                <span class="w-1.5 h-1.5 bg-emerald-400 rounded-none" title="System Active"></span>
+            </div>
+            <button 
+                id="admin-signout-btn"
+                class="w-full flex items-center space-x-2 px-3 py-2.5 text-[11px] uppercase tracking-[0.1em] font-semibold text-rose-400 hover:text-white hover:bg-rose-700/40 transition-colors rounded-none border border-rose-800/30"
+            >
+                <svg class="w-4 h-4 stroke-current flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+                <span>Sign Out</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        <!-- Top Header Bar (Monochromatic Hairline Lines) -->
+        <header class="bg-white border-b border-line px-8 py-4 flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center space-x-4">
+                <h2 class="text-[11px] font-semibold text-muted uppercase tracking-[0.15em]">Dashboard Control</h2>
+            </div>
+            
+            <div class="flex items-center space-x-6">
+                <!-- Live Shop Link -->
+                <a href="/public/index.html" target="_blank" class="text-xs font-medium uppercase tracking-wider text-obsidian hover:underline transition-colors flex items-center space-x-2">
+                    <svg class="w-4 h-4 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    <span>View Storefront</span>
+                </a>
+
+                <!-- User Profile Badge -->
+                <div class="flex items-center space-x-3 pl-6 border-l border-line">
+                    <div id="admin-header-avatar" class="w-8 h-8 bg-obsidian text-white font-bold text-xs flex items-center justify-center rounded-none">
+                        ?
+                    </div>
+                    <div class="hidden sm:block text-left">
+                        <span id="admin-header-name" class="text-xs font-bold text-obsidian block leading-none">Loading...</span>
+                        <span class="text-[10px] text-muted font-medium uppercase tracking-wider">Administrator</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic SPA Container -->
+        <main class="flex-1 overflow-y-auto p-8 md:p-12 bg-[#F9F9F9]">
+            <div id="admin-app" class="max-w-7xl mx-auto">
+                <!-- Views injected dynamically via admin_router.js -->
+            </div>
+        </main>
+    </div>
+
+    <!-- App Router -->
+    <script type="module">
+        import { AdminRouter } from './js/admin_router.js';
+        const router = new AdminRouter();
+        router.init();
+
+        // Admin Sign-Out button
+        document.getElementById('admin-signout-btn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/storefront/auth.php?action=logout', { method: 'POST' });
+            } catch (e) {}
+            window.location.href = '/public/index.html';
+        });
+    </script>
+</body>
+</html>
