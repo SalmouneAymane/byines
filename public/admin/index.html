@@ -53,13 +53,16 @@
 <body class="h-full font-sans antialiased text-[#1B1B1B] flex overflow-hidden bg-[#F9F9F9]">
 
     <!-- Sidebar (Sharp 90° corners, Monochromatic Dark) -->
-    <aside class="w-64 bg-obsidian text-stone-300 flex flex-col flex-shrink-0 border-r border-stone-800 rounded-none">
+    <aside id="admin-sidebar" aria-label="Admin navigation" aria-hidden="true" inert class="fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col border-r border-stone-800 bg-obsidian text-stone-300 transition-transform duration-300 md:relative md:inset-auto md:z-auto md:translate-x-0 md:flex-shrink-0 rounded-none">
         <!-- Brand Logo Header -->
         <div class="p-6 border-b border-stone-800 flex items-center justify-between">
             <div>
                 <span class="text-[10px] uppercase tracking-[0.15em] text-stone-400 font-semibold block">Store Management</span>
                 <h1 class="text-2xl font-serif font-normal text-white tracking-widest mt-1">BY INES</h1>
             </div>
+            <button id="admin-sidebar-close" type="button" aria-label="Close navigation" class="flex h-10 w-10 items-center justify-center text-stone-300 hover:text-white md:hidden">
+                <svg class="h-5 w-5 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
         </div>
 
         <!-- Navigation Menu -->
@@ -103,25 +106,29 @@
             </button>
         </div>
     </aside>
+    <div id="admin-sidebar-backdrop" class="fixed inset-0 z-40 hidden bg-black/50 md:hidden" aria-hidden="true"></div>
 
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         <!-- Top Header Bar (Monochromatic Hairline Lines) -->
-        <header class="bg-white border-b border-line px-8 py-4 flex items-center justify-between flex-shrink-0">
+        <header class="bg-white border-b border-line px-4 py-3 sm:px-8 sm:py-4 flex items-center justify-between flex-shrink-0">
             <div class="flex items-center space-x-4">
-                <h2 class="text-[11px] font-semibold text-muted uppercase tracking-[0.15em]">Dashboard Control</h2>
+                <button id="admin-sidebar-open" type="button" aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open admin navigation" class="flex h-10 w-10 items-center justify-center text-obsidian md:hidden">
+                    <svg class="h-5 w-5 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M3 6h18M3 12h18M3 18h18"/></svg>
+                </button>
+                <h2 class="text-[10px] sm:text-[11px] font-semibold text-muted uppercase tracking-[0.15em]">Dashboard Control</h2>
             </div>
             
-            <div class="flex items-center space-x-6">
+            <div class="flex items-center space-x-3 sm:space-x-6">
                 <!-- Live Shop Link -->
-                <a href="/public/index.html" target="_blank" class="text-xs font-medium uppercase tracking-wider text-obsidian hover:underline transition-colors flex items-center space-x-2">
+                <a href="/public/index.html" target="_blank" class="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-obsidian hover:underline transition-colors flex items-center space-x-2">
                     <svg class="w-4 h-4 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                    <span>View Storefront</span>
+                    <span class="hidden sm:inline">View Storefront</span>
                 </a>
 
                 <!-- User Profile Badge -->
-                <div class="flex items-center space-x-3 pl-6 border-l border-line">
+                <div class="flex items-center space-x-2 sm:space-x-3 pl-3 sm:pl-6 border-l border-line">
                     <div id="admin-header-avatar" class="w-8 h-8 bg-obsidian text-white font-bold text-xs flex items-center justify-center rounded-none">
                         ?
                     </div>
@@ -134,7 +141,7 @@
         </header>
 
         <!-- Dynamic SPA Container -->
-        <main class="flex-1 overflow-y-auto p-8 md:p-12 bg-[#F9F9F9]">
+        <main class="flex-1 overflow-y-auto p-4 sm:p-8 md:p-12 bg-[#F9F9F9]">
             <div id="admin-app" class="max-w-7xl mx-auto">
                 <!-- Views injected dynamically via admin_router.js -->
             </div>
@@ -144,13 +151,44 @@
     <!-- App Router -->
     <script type="module">
         import { AdminRouter } from './js/admin_router.js';
+        import { secureFetch } from '/public/js/security.js';
         const router = new AdminRouter();
         router.init();
+
+        const sidebar = document.getElementById('admin-sidebar');
+        const sidebarBackdrop = document.getElementById('admin-sidebar-backdrop');
+        const sidebarOpenButton = document.getElementById('admin-sidebar-open');
+        const sidebarCloseButton = document.getElementById('admin-sidebar-close');
+
+        const setSidebarOpen = (isOpen) => {
+            const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+            const mobileOpen = !isDesktop && isOpen;
+            sidebar.classList.toggle('-translate-x-full', !mobileOpen);
+            sidebar.setAttribute('aria-hidden', String(!isDesktop && !mobileOpen));
+            sidebar.inert = !isDesktop && !mobileOpen;
+            sidebarBackdrop.classList.toggle('hidden', !mobileOpen);
+            sidebarOpenButton.setAttribute('aria-expanded', String(mobileOpen));
+            document.body.classList.toggle('overflow-hidden', mobileOpen);
+        };
+
+        setSidebarOpen(false);
+        sidebarOpenButton.addEventListener('click', () => setSidebarOpen(true));
+        sidebarCloseButton.addEventListener('click', () => setSidebarOpen(false));
+        sidebarBackdrop.addEventListener('click', () => setSidebarOpen(false));
+        sidebar.querySelectorAll('a[href]').forEach(link => {
+            link.addEventListener('click', () => setSidebarOpen(false));
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') setSidebarOpen(false);
+        });
+        window.matchMedia('(min-width: 768px)').addEventListener('change', event => {
+            if (event.matches) setSidebarOpen(false);
+        });
 
         // Admin Sign-Out button
         document.getElementById('admin-signout-btn').addEventListener('click', async () => {
             try {
-                await fetch('/api/storefront/auth.php?action=logout', { method: 'POST' });
+                await secureFetch('/api/storefront/auth.php?action=logout', { method: 'POST' });
             } catch (e) {}
             window.location.href = '/public/index.html';
         });

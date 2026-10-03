@@ -1,5 +1,6 @@
 # Environment configuration
 .env
+/storage/security-rate-limits/*.json
 
 # archive/report files
 archive/

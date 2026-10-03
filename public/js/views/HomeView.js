@@ -1,5 +1,6 @@
 import { CartState } from '../cart.js';
 import { i18n } from '../i18n.js';
+import { currencyStore } from '../currencyStore.js';
 
 export const HomeView = {
     async render() {
@@ -63,26 +64,26 @@ export const HomeView = {
                     <div class="relative group">
                         
                         <!-- Left Floating Arrow Button -->
-                        <button id="popular-prev" aria-label="Previous" class="absolute left-0 -ml-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 backdrop-blur border border-[#E5E2DC] text-[#2C2926] hover:bg-[#2C2926] hover:text-white hover:border-[#2C2926] shadow-lg flex items-center justify-center transition-all hover:scale-110 focus:outline-none">
+                        <button id="popular-prev" aria-label="Previous" class="hidden sm:flex absolute left-0 -ml-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 backdrop-blur border border-[#E5E2DC] text-[#2C2926] hover:bg-[#2C2926] hover:text-white hover:border-[#2C2926] shadow-lg items-center justify-center transition-all hover:scale-110 focus:outline-none">
                             <svg class="w-5 h-5 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7"/></svg>
                         </button>
 
                         <!-- Right Floating Arrow Button -->
-                        <button id="popular-next" aria-label="Next" class="absolute right-0 -mr-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 backdrop-blur border border-[#E5E2DC] text-[#2C2926] hover:bg-[#2C2926] hover:text-white hover:border-[#2C2926] shadow-lg flex items-center justify-center transition-all hover:scale-110 focus:outline-none">
+                        <button id="popular-next" aria-label="Next" class="hidden sm:flex absolute right-0 -mr-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 backdrop-blur border border-[#E5E2DC] text-[#2C2926] hover:bg-[#2C2926] hover:text-white hover:border-[#2C2926] shadow-lg items-center justify-center transition-all hover:scale-110 focus:outline-none">
                             <svg class="w-5 h-5 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7"/></svg>
                         </button>
 
                         <!-- Overflow-Hidden Viewport -->
-                        <div class="overflow-hidden py-2 px-1">
+                        <div class="overflow-x-auto sm:overflow-hidden touch-pan-x snap-x snap-mandatory py-2 px-1">
                             <!-- Animated Track -->
-                            <div id="popular-track" class="flex transition-transform duration-500 ease-out space-x-6">
+                            <div id="popular-track" class="flex w-max sm:w-auto transition-transform duration-500 ease-out gap-4 sm:gap-6" style="direction: ltr;">
                                 ${carouselProducts.map((prod, index) => {
                                     const mainImg = prod.main_image 
                                         ? (prod.main_image.startsWith('prod_') ? `/public/uploads/products/${prod.main_image}` : `/assets/products/${prod.main_image}`)
                                         : 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80';
 
                                     return `
-                                        <div class="group space-y-3 w-[calc(100%-0px)] sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] shrink-0">
+                                        <div class="group space-y-3 w-[82vw] sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] shrink-0 snap-start">
                                             <!-- Image Box with Soft Rounded Corners -->
                                             <div class="relative aspect-[3/4] bg-[#EFECE6] rounded-xl overflow-hidden shadow-sm">
                                                 <a href="#product/${prod.id}" class="block w-full h-full">
@@ -101,7 +102,7 @@ export const HomeView = {
                                                     ${prod.name}
                                                 </a>
                                                 <span class="text-xs text-[#7A7672] font-sans mt-0.5 block">
-                                                    $${parseFloat(prod.price).toFixed(2)}
+                                                    ${currencyStore.formatPrice(prod.price)}
                                                 </span>
                                             </div>
                                         </div>
@@ -151,14 +152,15 @@ export const HomeView = {
                         ${i18n.t('categories.title')}
                     </h2>
 
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                    <div class="-mx-6 overflow-x-auto px-6 touch-pan-x snap-x snap-mandatory md:mx-0 md:overflow-visible md:px-0">
+                      <div class="flex w-max gap-6 text-center md:grid md:w-auto md:grid-cols-4 md:gap-8">
                         ${categories.map(cat => {
                             const catImg = cat.image_url 
                                 ? (cat.image_url.startsWith('cat_') ? `/public/uploads/categories/${cat.image_url}` : `/assets/categories/${cat.image_url}`)
                                 : 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80';
 
                             return `
-                                <a href="#shop?category=${cat.id}" class="group block space-y-3">
+                                <a href="#shop?category=${cat.id}" class="group block w-36 shrink-0 snap-start space-y-3 md:w-auto">
                                     <div class="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden mx-auto shadow-md border-2 border-white group-hover:scale-105 transition-transform duration-500">
                                         <img src="${catImg}" onerror="this.src='https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80';" alt="${cat.name}" class="w-full h-full object-cover" />
                                     </div>
@@ -168,6 +170,7 @@ export const HomeView = {
                                 </a>
                             `;
                         }).join('')}
+                      </div>
                     </div>
                 </section>
 
@@ -190,6 +193,12 @@ export const HomeView = {
             };
 
             const updatePosition = (animate = true) => {
+                if (window.innerWidth < 640) {
+                    track.style.transition = 'none';
+                    track.style.transform = '';
+                    return;
+                }
+
                 const visible = getVisibleCards();
                 const maxIndex = totalCarouselCount - visible;
                 if (currentIndex > maxIndex) currentIndex = 0;
@@ -205,6 +214,7 @@ export const HomeView = {
                     } else {
                         track.style.transition = 'transform 500ms cubic-bezier(0.25, 1, 0.5, 1)';
                     }
+                    // Always translate left — the track itself is forced LTR
                     track.style.transform = `translateX(-${offset}px)`;
                 }
             };

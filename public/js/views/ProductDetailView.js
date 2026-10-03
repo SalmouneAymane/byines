@@ -1,8 +1,10 @@
 import { CartState } from '../cart.js';
 import { i18n } from '../i18n.js';
+import { currencyStore } from '../currencyStore.js';
 
 export const ProductDetailView = {
     state: {
+        currentParam: null,
         product: null,
         variants: [],
         relatedProducts: [],
@@ -15,10 +17,12 @@ export const ProductDetailView = {
         error: null
     },
 
-    async render(productIdOrSlug) {
+    async loadProduct(productIdOrSlug) {
         this.state.loading = true;
         this.state.error = null;
         this.state.quantity = 1;
+        this.state.currentParam = productIdOrSlug;
+        this.state.activeImageIndex = 0;
 
         const paramKey = isNaN(productIdOrSlug) ? 'slug' : 'id';
 
@@ -31,14 +35,18 @@ export const ProductDetailView = {
                 this.state.variants = result.data.variants || [];
                 this.state.relatedProducts = result.data.related_products || [];
 
-                // Initialize default selected color & size
+                // Initialize default selected color & size from first variant
                 if (this.state.variants.length > 0) {
                     const firstVar = this.state.variants[0];
-                    this.state.selectedColor = firstVar.color !== 'Default' ? firstVar.color : '';
-                    this.state.selectedSize = firstVar.size;
-                    this.updateSelectedVariant();
+                    this.state.selectedColor = (firstVar.color && firstVar.color !== 'Default') ? firstVar.color : '';
+                    this.state.selectedSize = firstVar.size || '';
+                } else {
+                    this.state.selectedColor = '';
+                    this.state.selectedSize = '';
                 }
+                this.updateSelectedVariant();
             } else {
+                this.state.product = null;
                 this.state.error = result.message || 'Product not found';
             }
         } catch (e) {
@@ -47,9 +55,19 @@ export const ProductDetailView = {
         } finally {
             this.state.loading = false;
         }
+    },
+
+    async render(productIdOrSlug) {
+        // Load from network only if navigating to a new/different product
+        if (!this.state.product || String(this.state.currentParam) !== String(productIdOrSlug)) {
+            await this.loadProduct(productIdOrSlug);
+        }
 
         setTimeout(() => this.attachEvents(), 0);
+        return this.renderHtml();
+    },
 
+    renderHtml() {
         if (this.state.loading) {
             return `
                 <div class="max-w-6xl mx-auto px-6 py-20 flex justify-center items-center">
@@ -92,7 +110,7 @@ export const ProductDetailView = {
         const stockQty = selectedVar ? selectedVar.stock_quantity : (p.total_stock || 0);
 
         return `
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16 font-sans">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-12 sm:space-y-16 font-sans">
                 
                 <!-- Breadcrumb Navigation -->
                 <nav class="flex items-center space-x-2 text-xs text-[#7A7672]">
@@ -104,28 +122,14 @@ export const ProductDetailView = {
                 </nav>
 
                 <!-- Product Showcase Grid (Left: Gallery, Right: Details) -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
                     
-                    <!-- Left Column: Gallery (Lg 7 cols) -->
-                    <div class="lg:col-span-7 space-y-4">
+                    <!-- Left Column: Gallery (Thumbnails on Left + Main Image on Right) -->
+                    <div class="lg:col-span-7 flex flex-col-reverse md:flex-row gap-3 sm:gap-4 items-start">
                         
-                        <!-- Main Viewport Image with Zoom Frame -->
-                        <div class="relative aspect-[3/4] bg-[#EFECE6] border border-[#E5E2DC] overflow-hidden group">
-                            <img 
-                                id="product-main-view-image"
-                                src="${mainImgSrc}" 
-                                onerror="this.src='https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=1200&q=80';" 
-                                alt="${this.escapeHtml(p.name)}" 
-                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                            />
-                            <span class="absolute top-4 left-4 bg-white/95 backdrop-blur border border-[#E5E2DC] text-[10px] uppercase tracking-wider text-[#2C2926] px-3 py-1 font-semibold">
-                                ${this.escapeHtml(p.category_name || 'Modest Collection')}
-                            </span>
-                        </div>
-
-                        <!-- Thumbnails Row -->
+                        <!-- Thumbnail Vertical Strip (Left) -->
                         ${images.length > 1 ? `
-                            <div class="flex items-center gap-3 overflow-x-auto pb-2">
+                            <div class="flex md:flex-col gap-2.5 overflow-x-auto md:overflow-y-auto max-h-[860px] shrink-0 w-full md:w-20 lg:w-24 pb-1 md:pb-0 scrollbar-thin">
                                 ${images.map((img, idx) => {
                                     const thumbSrc = img.image_name.startsWith('prod_') 
                                         ? `/public/uploads/products/${img.image_name}` 
@@ -135,7 +139,8 @@ export const ProductDetailView = {
                                         <button 
                                             type="button"
                                             data-thumb-index="${idx}"
-                                            class="w-20 aspect-[3/4] border transition-all cursor-pointer overflow-hidden shrink-0 ${isActive ? 'border-[#2C2926] ring-1 ring-[#2C2926]' : 'border-[#E5E2DC] opacity-70 hover:opacity-100'}"
+                                            aria-label="View product image ${idx + 1}"
+                                            class="w-16 md:w-full aspect-[720/957] border transition-all cursor-pointer overflow-hidden shrink-0 ${isActive ? 'border-[#1A1817] ring-2 ring-[#1A1817]' : 'border-[#E5E2DC] opacity-70 hover:opacity-100 hover:border-stone-400'}"
                                         >
                                             <img src="${thumbSrc}" onerror="this.src='https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80';" alt="" class="w-full h-full object-cover" />
                                         </button>
@@ -143,6 +148,20 @@ export const ProductDetailView = {
                                 }).join('')}
                             </div>
                         ` : ''}
+
+                        <!-- Main Viewport Image -->
+                        <div class="flex-1 w-full relative aspect-[720/957] bg-[#EFECE6] border border-[#E5E2DC] overflow-hidden group">
+                            <img 
+                                id="product-main-view-image"
+                                src="${mainImgSrc}" 
+                                onerror="this.src='https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=1200&q=80';" 
+                                alt="${this.escapeHtml(p.name)}" 
+                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                            <span class="absolute top-4 left-4 bg-white/95 backdrop-blur border border-[#E5E2DC] text-[10px] uppercase tracking-wider text-[#2C2926] px-3 py-1 font-semibold">
+                                ${this.escapeHtml(p.category_name || 'Modest Collection')}
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Right Column: Details & Actions (Lg 5 cols) -->
@@ -155,10 +174,10 @@ export const ProductDetailView = {
                             </h1>
                             <div class="flex items-center space-x-3 pt-2">
                                 <span class="text-2xl font-serif font-medium text-[#2C2926]">
-                                    $${currentPrice.toFixed(2)}
+                                    ${currencyStore.formatPrice(currentPrice)}
                                 </span>
                                 ${p.old_price ? `
-                                    <span class="text-base text-[#7A7672] line-through font-sans">$${parseFloat(p.old_price).toFixed(2)}</span>
+                                    <span class="text-base text-[#7A7672] line-through font-sans">${currencyStore.formatPrice(p.old_price)}</span>
                                 ` : ''}
                             </div>
                         </div>
@@ -175,16 +194,20 @@ export const ProductDetailView = {
                         ${colors.length > 0 ? `
                             <div class="space-y-2.5">
                                 <label class="text-xs uppercase tracking-wider font-semibold text-[#2C2926] flex items-center justify-between">
-                                    <span>Color: <strong class="font-normal text-[#7A7672]">${this.escapeHtml(this.state.selectedColor || 'Select Color')}</strong></span>
+                                    <span>COLOR: <strong class="font-bold text-[#1A1817]">${this.escapeHtml(this.state.selectedColor || 'SELECT COLOR')}</strong></span>
                                 </label>
                                 <div class="flex flex-wrap gap-2.5">
                                     ${colors.map(color => {
-                                        const isSelected = this.state.selectedColor === color;
+                                        const isSelected = this.state.selectedColor.toLowerCase() === color.toLowerCase();
                                         return `
                                             <button 
                                                 type="button" 
                                                 data-select-color="${this.escapeHtml(color)}"
-                                                class="px-4 py-2 text-xs border font-medium uppercase tracking-wider transition-all cursor-pointer ${isSelected ? 'bg-[#2C2926] text-white border-[#2C2926]' : 'bg-white text-[#5D5F5F] border-[#E5E2DC] hover:border-[#2C2926]'}"
+                                                class="px-4 py-2 text-xs border font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                                                    isSelected 
+                                                        ? 'bg-[#1A1817] text-white border-[#1A1817] shadow-sm' 
+                                                        : 'bg-white text-[#5D5F5F] border-[#E5E2DC] hover:border-[#1A1817] hover:text-[#1A1817]'
+                                                }"
                                             >
                                                 ${this.escapeHtml(color)}
                                             </button>
@@ -198,17 +221,21 @@ export const ProductDetailView = {
                         ${sizes.length > 0 ? `
                             <div class="space-y-2.5">
                                 <label class="text-xs uppercase tracking-wider font-semibold text-[#2C2926] flex items-center justify-between">
-                                    <span>Size: <strong class="font-normal text-[#7A7672]">${this.escapeHtml(this.state.selectedSize || 'Select Size')}</strong></span>
+                                    <span>SIZE: <strong class="font-bold text-[#1A1817]">${this.escapeHtml(this.state.selectedSize || 'SELECT SIZE')}</strong></span>
                                     <a href="#about" class="text-[11px] underline text-[#7A7672] hover:text-[#2C2926]">Size Guide</a>
                                 </label>
                                 <div class="flex flex-wrap gap-2.5">
                                     ${sizes.map(size => {
-                                        const isSelected = this.state.selectedSize === size;
+                                        const isSelected = this.state.selectedSize.toLowerCase() === size.toLowerCase();
                                         return `
                                             <button 
                                                 type="button" 
                                                 data-select-size="${this.escapeHtml(size)}"
-                                                class="w-12 h-11 text-xs border font-mono font-semibold transition-all cursor-pointer ${isSelected ? 'bg-[#2C2926] text-white border-[#2C2926]' : 'bg-white text-[#5D5F5F] border-[#E5E2DC] hover:border-[#2C2926]'}"
+                                                class="min-w-[44px] h-11 px-3 text-xs border font-mono font-bold transition-all cursor-pointer ${
+                                                    isSelected 
+                                                        ? 'bg-[#1A1817] text-white border-[#1A1817] shadow-sm' 
+                                                        : 'bg-white text-[#5D5F5F] border-[#E5E2DC] hover:border-[#1A1817] hover:text-[#1A1817]'
+                                                }"
                                             >
                                                 ${this.escapeHtml(size)}
                                             </button>
@@ -233,7 +260,7 @@ export const ProductDetailView = {
                                     type="button" 
                                     id="btn-add-to-cart"
                                     ${!inStock ? 'disabled' : ''}
-                                    class="flex-1 h-12 bg-[#2C2926] text-white text-xs font-semibold uppercase tracking-[0.18em] hover:bg-black disabled:bg-stone-300 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center space-x-2"
+                                    class="flex-1 h-12 bg-[#1A1817] text-white text-xs font-semibold uppercase tracking-[0.18em] hover:bg-black disabled:bg-stone-300 disabled:cursor-not-allowed transition-all shadow-sm flex items-center justify-center space-x-2"
                                 >
                                     <svg class="w-4 h-4 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                                     <span>${inStock ? i18n.t('product.add_to_bag') : i18n.t('product.out_of_stock')}</span>
@@ -244,7 +271,7 @@ export const ProductDetailView = {
                             <a 
                                 href="#checkout" 
                                 id="btn-buy-now"
-                                class="w-full h-12 border border-[#2C2926] text-[#2C2926] text-xs font-semibold uppercase tracking-[0.18em] flex items-center justify-center hover:bg-[#2C2926] hover:text-white transition-colors"
+                                class="w-full h-12 border border-[#1A1817] text-[#1A1817] text-xs font-semibold uppercase tracking-[0.18em] flex items-center justify-center hover:bg-[#1A1817] hover:text-white transition-colors"
                             >
                                 ${i18n.t('product.cod_checkout')}
                             </a>
@@ -306,7 +333,7 @@ export const ProductDetailView = {
                                                 ${this.escapeHtml(rel.name)}
                                             </a>
                                             <span class="text-xs text-[#7A7672] font-sans mt-0.5 block">
-                                                $${parseFloat(rel.price).toFixed(2)}
+                                                ${currencyStore.formatPrice(rel.price)}
                                             </span>
                                         </div>
                                     </div>
@@ -326,11 +353,20 @@ export const ProductDetailView = {
             return;
         }
 
-        const match = this.state.variants.find(v => {
-            const colorMatch = !this.state.selectedColor || v.color === this.state.selectedColor || v.color === 'Default';
-            const sizeMatch = !this.state.selectedSize || v.size === this.state.selectedSize;
+        // Try exact color and size match first
+        let match = this.state.variants.find(v => {
+            const colorMatch = !this.state.selectedColor || v.color.toLowerCase() === this.state.selectedColor.toLowerCase() || v.color === 'Default';
+            const sizeMatch = !this.state.selectedSize || v.size.toLowerCase() === this.state.selectedSize.toLowerCase();
             return colorMatch && sizeMatch;
         });
+
+        // If no exact match (e.g. size not available in this color), match by color
+        if (!match && this.state.selectedColor) {
+            match = this.state.variants.find(v => v.color.toLowerCase() === this.state.selectedColor.toLowerCase());
+            if (match) {
+                this.state.selectedSize = match.size;
+            }
+        }
 
         this.state.selectedVariant = match || this.state.variants[0];
     },
@@ -350,6 +386,15 @@ export const ProductDetailView = {
                         : `/assets/products/${imgObj.image_name}`;
                     mainImg.src = src;
                 }
+
+                // Update active classes on thumbnail buttons
+                document.querySelectorAll('[data-thumb-index]').forEach((tBtn, tIdx) => {
+                    if (tIdx === idx) {
+                        tBtn.className = 'w-16 md:w-full aspect-[720/957] border transition-all cursor-pointer overflow-hidden shrink-0 border-[#1A1817] ring-2 ring-[#1A1817] opacity-100';
+                    } else {
+                        tBtn.className = 'w-16 md:w-full aspect-[720/957] border transition-all cursor-pointer overflow-hidden shrink-0 border-[#E5E2DC] opacity-70 hover:opacity-100 hover:border-stone-400';
+                    }
+                });
             };
         });
 
@@ -360,9 +405,10 @@ export const ProductDetailView = {
                 this.state.selectedColor = color;
                 this.updateSelectedVariant();
 
-                // Check if an image matches this color
+                // Check if an image matches this color name
                 const images = this.state.product?.images || [];
-                const colorImgIdx = images.findIndex(img => img.color === color);
+                const colorNormalized = color.toLowerCase().trim();
+                const colorImgIdx = images.findIndex(img => img.image_name.toLowerCase().includes(colorNormalized));
                 if (colorImgIdx !== -1) {
                     this.state.activeImageIndex = colorImgIdx;
                 }
@@ -432,10 +478,11 @@ export const ProductDetailView = {
         }
     },
 
-    async reRenderView() {
+    reRenderView() {
         const app = document.getElementById('app');
-        if (app) {
-            app.innerHTML = await this.render(this.state.product.id);
+        if (app && this.state.product) {
+            app.innerHTML = this.renderHtml();
+            this.attachEvents();
         }
     },
 
@@ -451,3 +498,4 @@ export const ProductDetailView = {
 };
 
 window.ProductDetailView = ProductDetailView;
+

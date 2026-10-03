@@ -1,5 +1,6 @@
 import { CartState } from '../cart.js';
 import { i18n } from '../i18n.js';
+import { currencyStore } from '../currencyStore.js';
 
 export const ShopView = {
     state: {
@@ -22,17 +23,48 @@ export const ShopView = {
     parseHashParams() {
         const hash = window.location.hash;
         const queryIndex = hash.indexOf('?');
-        if (queryIndex === -1) return;
+        const params = new URLSearchParams(queryIndex === -1 ? '' : hash.substring(queryIndex + 1));
 
-        const queryString = hash.substring(queryIndex + 1);
-        const params = new URLSearchParams(queryString);
-
-        if (params.has('category')) this.state.filters.category_id = params.get('category');
+        this.state.filters.category_id = params.get('category') || '';
         if (params.has('collection')) this.state.filters.collection_id = params.get('collection');
         if (params.has('search')) this.state.filters.search = params.get('search');
         if (params.has('sort')) this.state.filters.sort = params.get('sort');
         if (params.has('min_price')) this.state.filters.min_price = params.get('min_price');
         if (params.has('max_price')) this.state.filters.max_price = params.get('max_price');
+    },
+
+    async resolveCategoryRoute() {
+        const path = window.location.hash.split('?')[0].split('/');
+        const categorySlug = path[0] === '#shop' && path[1]
+            ? new URLSearchParams(`category=${path[1]}`).get('category')
+            : '';
+
+        if (!categorySlug && !this.state.filters.category_id) return;
+
+        const response = await fetch('/api/storefront/products.php?action=filter_options');
+        if (!response.ok) throw new Error(`Failed to load categories (${response.status})`);
+
+        const result = await response.json();
+        if (!result.success || !Array.isArray(result.data?.categories)) {
+            throw new Error(result.message || 'Failed to load categories');
+        }
+
+        const categories = result.data.categories;
+        this.state.filterOptions = result.data;
+        const normalizeSlug = value => String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
+        const category = categorySlug
+            ? categories.find(item => normalizeSlug(item.slug) === normalizeSlug(categorySlug)
+                || normalizeSlug(item.name) === normalizeSlug(categorySlug))
+            : categories.find(item => String(item.id) === String(this.state.filters.category_id));
+
+        this.state.filters.category_id = category ? String(category.id) : '';
+        this.updateHashUrl();
     },
 
     updateHashUrl() {
@@ -92,6 +124,7 @@ export const ShopView = {
 
     async render() {
         this.parseHashParams();
+        await this.resolveCategoryRoute();
 
         // Initial background fetch
         this.fetchProducts();
@@ -271,21 +304,32 @@ export const ShopView = {
                 ${(opts.colors && opts.colors.length > 0) ? `
                     <div class="space-y-3 border-t border-[#E5E2DC] pt-4">
                         <h4 class="text-xs font-semibold uppercase tracking-wider text-[#2C2926]">Color Swatches</h4>
-                        <div class="flex flex-wrap gap-2">
-                            ${opts.colors.map(color => {
+                        <div id="color-options-${prefix}" class="flex flex-wrap gap-2">
+                            ${opts.colors.map((color, index) => {
                                 const active = this.state.filters.colors.includes(color);
+                                const collapsed = index >= 5 && !active;
                                 return `
                                     <button 
                                         type="button" 
                                         data-color="${color}" 
+                                        ${collapsed ? 'data-color-extra' : ''}
                                         title="${color}"
-                                        class="filter-color-btn text-[11px] px-3 py-1 border transition-all cursor-pointer ${active ? 'bg-[#2C2926] text-white border-[#2C2926]' : 'bg-white text-[#5D5F5F] border-[#E5E2DC] hover:border-[#2C2926]'}"
+                                        class="filter-color-btn text-[11px] px-3 py-1 border transition-all cursor-pointer ${collapsed ? 'hidden' : ''} ${active ? 'bg-[#2C2926] text-white border-[#2C2926]' : 'bg-white text-[#5D5F5F] border-[#E5E2DC] hover:border-[#2C2926]'}"
                                     >
                                         ${color}
                                     </button>
                                 `;
                             }).join('')}
                         </div>
+                        ${opts.colors.length > 5 ? `
+                            <button
+                                type="button"
+                                data-toggle-colors
+                                aria-controls="color-options-${prefix}"
+                                aria-expanded="false"
+                                class="text-[11px] text-[#7A7672] hover:text-[#2C2926] hover:underline"
+                            >Show more</button>
+                        ` : ''}
                     </div>
                 ` : ''}
 
@@ -320,7 +364,7 @@ export const ShopView = {
 
         if (this.state.loading) {
             container.innerHTML = `
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     ${[1, 2, 6].map(() => `
                         <div class="space-y-4 animate-pulse">
                             <div class="bg-[#EFECE6] aspect-[3/4] rounded-none"></div>
@@ -354,7 +398,7 @@ export const ShopView = {
         }
 
         container.innerHTML = `
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 ${this.state.products.map(prod => {
                     const mainImg = prod.main_image 
                         ? (prod.main_image.startsWith('prod_') ? `/public/uploads/products/${prod.main_image}` : `/assets/products/${prod.main_image}`)
@@ -397,9 +441,9 @@ export const ShopView = {
                                         ${this.escapeHtml(prod.name)}
                                     </a>
                                     <div class="flex items-center space-x-2 text-xs font-sans">
-                                        <span class="text-[#2C2926] font-medium">$${parseFloat(prod.price).toFixed(2)}</span>
+                                        <span class="text-[#2C2926] font-medium">${currencyStore.formatPrice(prod.price)}</span>
                                         ${prod.old_price ? `
-                                            <span class="text-[#7A7672] line-through">$${parseFloat(prod.old_price).toFixed(2)}</span>
+                                            <span class="text-[#7A7672] line-through">${currencyStore.formatPrice(prod.old_price)}</span>
                                         ` : ''}
                                     </div>
                                 </div>
@@ -621,6 +665,20 @@ export const ShopView = {
                     this.state.filters.colors.push(color);
                 }
                 this.fetchProducts();
+            };
+        });
+
+        document.querySelectorAll('[data-toggle-colors]').forEach(btn => {
+            btn.onclick = () => {
+                const expanded = btn.getAttribute('aria-expanded') === 'true';
+                const container = document.getElementById(btn.getAttribute('aria-controls'));
+                if (!container) return;
+
+                container.querySelectorAll('[data-color-extra]').forEach(colorButton => {
+                    colorButton.classList.toggle('hidden', expanded);
+                });
+                btn.setAttribute('aria-expanded', String(!expanded));
+                btn.textContent = expanded ? 'Show more' : 'Show less';
             };
         });
 

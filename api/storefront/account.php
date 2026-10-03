@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../bootstrap.php';
+
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../../src/Config/Database.php';
@@ -21,11 +23,6 @@ try {
 
     $controller = new AccountController($userRepo, $orderRepo);
     $controller->handleRequest();
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Internal server error',
-        'error'   => $e->getMessage()
-    ]);
+} catch (Throwable $e) {
+    \App\Security\Security::handleCaughtApiException($e);
 }

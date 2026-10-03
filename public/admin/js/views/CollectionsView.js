@@ -1,3 +1,5 @@
+import { secureFetch } from '../../../js/security.js';
+
 export const CollectionsView = {
     async render() {
         let collections = [];
@@ -91,7 +93,7 @@ export const CollectionsView = {
 
             <!-- Add/Edit Collection Modal (Sharp 90° Corners, File Upload) -->
             <div id="collection-modal" class="fixed inset-0 bg-obsidian/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-                <div class="bg-white border border-stone-900 w-full max-w-md p-8 rounded-none shadow-2xl relative space-y-6">
+                <div class="bg-white border border-stone-900 w-full max-w-md max-h-[90dvh] overflow-y-auto p-4 sm:p-8 rounded-none shadow-2xl relative space-y-6">
                     <div class="flex items-center justify-between border-b border-line pb-4">
                         <h3 id="modal-title" class="text-xl font-serif font-normal text-obsidian">Add New Collection</h3>
                         <button id="btn-close-modal" class="text-stone-400 hover:text-obsidian text-lg font-bold">✕</button>
@@ -107,15 +109,45 @@ export const CollectionsView = {
                             <input type="text" id="collection-title" name="title" required placeholder="e.g. Summer Collection" class="w-full px-4 py-3 bg-[#FAF9F6] border border-line text-xs font-sans text-obsidian focus:outline-none focus:border-obsidian rounded-none" />
                         </div>
 
-                        <!-- Image File Upload Control -->
+                        <!-- Image File Drag & Drop Control -->
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-muted mb-2">Banner Image File</label>
-                            <div class="border border-line bg-[#FAF9F6] p-4 text-center rounded-none space-y-3">
-                                <div id="image-preview-box" class="w-32 h-16 bg-stone-200 border border-line mx-auto flex items-center justify-center overflow-hidden hidden">
-                                    <img id="image-preview" src="" alt="Preview" class="w-full h-full object-cover" />
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-muted mb-2">Banner Image</label>
+                            <div 
+                                id="collection-dropzone" 
+                                class="border-2 border-dashed border-stone-300 hover:border-obsidian bg-[#FAF9F6] p-6 text-center rounded-none transition-all cursor-pointer relative group"
+                            >
+                                <input 
+                                    type="file" 
+                                    id="collection-file" 
+                                    name="image_file" 
+                                    accept="image/jpeg,image/png,image/webp" 
+                                    class="hidden" 
+                                />
+                                
+                                <!-- Empty / Placeholder state -->
+                                <div id="collection-drop-placeholder" class="space-y-2">
+                                    <div class="w-10 h-10 mx-auto text-stone-400 group-hover:text-obsidian transition-colors">
+                                        <svg class="w-10 h-10 stroke-current mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="text-xs text-stone-600 font-medium">
+                                        <span class="text-obsidian underline font-semibold">Click to browse</span> or drag and drop banner image here
+                                    </div>
+                                    <p class="text-[10px] text-stone-400">Accepted formats: JPG, PNG, WEBP (Recommended: 1200x400)</p>
                                 </div>
-                                <input type="file" id="collection-file" name="image_file" accept="image/jpeg,image/png,image/webp" class="block w-full text-xs text-stone-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-none file:border-0 file:text-[10px] file:font-bold file:uppercase file:tracking-wider file:bg-obsidian file:text-white hover:file:bg-stone-800 cursor-pointer" />
-                                <p class="text-[10px] text-stone-400">Accepted formats: JPG, PNG, WEBP (Recommended: 1200x400)</p>
+
+                                <!-- Preview state -->
+                                <div id="image-preview-box" class="hidden flex items-center justify-center gap-4">
+                                    <div class="w-28 h-14 bg-stone-200 border border-line overflow-hidden shrink-0">
+                                        <img id="image-preview" src="" alt="Preview" class="w-full h-full object-cover" />
+                                    </div>
+                                    <div class="text-left text-xs">
+                                        <p id="image-preview-name" class="font-semibold text-obsidian truncate max-w-[180px]">banner.jpg</p>
+                                        <p id="image-preview-size" class="text-[10px] text-stone-400">Selected</p>
+                                        <button type="button" id="btn-remove-collection-image" class="text-[10px] text-red-600 hover:underline font-bold uppercase mt-1">Remove Image</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -145,21 +177,87 @@ export const CollectionsView = {
         const btnOpenAdd = document.getElementById('btn-open-add-modal');
         const btnClose = document.getElementById('btn-close-modal');
         const btnCancel = document.getElementById('btn-cancel-modal');
+        const dropzone = document.getElementById('collection-dropzone');
         const fileInput = document.getElementById('collection-file');
+        const placeholder = document.getElementById('collection-drop-placeholder');
         const previewBox = document.getElementById('image-preview-box');
         const previewImg = document.getElementById('image-preview');
+        const previewName = document.getElementById('image-preview-name');
+        const previewSize = document.getElementById('image-preview-size');
+        const btnRemoveImg = document.getElementById('btn-remove-collection-image');
 
-        // File preview handler
-        if (fileInput) {
+        const showFilePreview = (file) => {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                previewImg.src = event.target.result;
+                previewName.textContent = file.name;
+                const sizeKb = (file.size / 1024).toFixed(1);
+                previewSize.textContent = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(2)} MB` : `${sizeKb} KB`;
+                previewBox.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        };
+
+        const clearFile = () => {
+            fileInput.value = '';
+            previewImg.src = '';
+            previewBox.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            document.getElementById('existing-image-path').value = '';
+        };
+
+        if (btnRemoveImg) {
+            btnRemoveImg.onclick = (e) => {
+                e.stopPropagation();
+                clearFile();
+            };
+        }
+
+        if (dropzone && fileInput) {
+            // Click to upload
+            dropzone.onclick = (e) => {
+                if (e.target !== btnRemoveImg && !btnRemoveImg?.contains(e.target)) {
+                    fileInput.click();
+                }
+            };
+
+            // Drag and drop event listeners
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.add('border-obsidian', 'bg-stone-100');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.remove('border-obsidian', 'bg-stone-100');
+                });
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files && files.length > 0) {
+                    const file = files[0];
+                    if (file.type.startsWith('image/')) {
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        fileInput.files = dataTransfer.files;
+                        showFilePreview(file);
+                    }
+                }
+            });
+
             fileInput.onchange = (e) => {
                 const file = e.target.files[0];
                 if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        previewImg.src = event.target.result;
-                        previewBox.classList.remove('hidden');
-                    };
-                    reader.readAsDataURL(file);
+                    showFilePreview(file);
                 }
             };
         }
@@ -177,9 +275,13 @@ export const CollectionsView = {
                     ? `/public/uploads/collections/${data.image_path}` 
                     : `/assets/collections/${data.image_path}`;
                 previewImg.src = imgSrc;
+                previewName.textContent = data.image_path;
+                previewSize.textContent = 'Existing Image';
                 previewBox.classList.remove('hidden');
+                placeholder.classList.add('hidden');
             } else {
                 previewBox.classList.add('hidden');
+                placeholder.classList.remove('hidden');
             }
 
             modalTitle.textContent = mode === 'create' ? 'Add New Collection' : 'Edit Collection';
@@ -211,7 +313,7 @@ export const CollectionsView = {
                 const title = btn.getAttribute('data-title');
                 if (confirm(`Are you sure you want to delete collection "${title}"?`)) {
                     try {
-                        const res = await fetch('/api/admin/collections.php', {
+                        const res = await secureFetch('/api/admin/collections.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ action: 'delete', id: id })
@@ -243,7 +345,7 @@ export const CollectionsView = {
                 }
 
                 try {
-                    const res = await fetch('/api/admin/collections.php', {
+                    const res = await secureFetch('/api/admin/collections.php', {
                         method: 'POST',
                         body: formData
                     });

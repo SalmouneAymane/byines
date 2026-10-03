@@ -1,3 +1,5 @@
+import { resetCsrfToken, secureFetch } from '../security.js';
+
 export const AuthState = {
     currentUser: null,
 
@@ -18,10 +20,11 @@ export const AuthState = {
 
     async logout() {
         try {
-            await fetch('/api/storefront/auth.php?action=logout', { method: 'POST' });
+            await secureFetch('/api/storefront/auth.php?action=logout', { method: 'POST' });
         } catch (e) {
             console.error('Logout request failed', e);
         } finally {
+            resetCsrfToken();
             this.currentUser = null;
             window.dispatchEvent(new CustomEvent('user-auth-changed', { detail: { user: null } }));
         }
@@ -51,7 +54,7 @@ export const AuthModal = {
                     <!-- Modal Card Container -->
                     <div 
                         id="auth-modal-card" 
-                        class="w-full max-w-md bg-white border border-[#E5E2DC] shadow-2xl transform scale-95 transition-transform duration-300 ease-out overflow-hidden"
+                        class="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain bg-white border border-[#E5E2DC] shadow-2xl transform scale-95 transition-transform duration-300 ease-out"
                     >
                         <div id="auth-modal-inner"></div>
                     </div>
@@ -298,7 +301,7 @@ export const AuthModal = {
                 submitBtn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>`;
 
                 try {
-                    const res = await fetch(`/api/storefront/auth.php?action=${action}`, {
+                    const res = await secureFetch(`/api/storefront/auth.php?action=${action}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)

@@ -3,6 +3,7 @@
 namespace App\Controllers\Storefront;
 
 use App\Contracts\UserRepositoryInterface;
+use App\Security\Security;
 
 class AuthController {
     public function __construct(
@@ -23,11 +24,17 @@ class AuthController {
         }
 
         if ($action === 'login' && $method === 'POST') {
+            if (!$this->allowAuthenticationAttempt('login')) {
+                return;
+            }
             $this->handleLogin();
             return;
         }
 
         if ($action === 'signup' && $method === 'POST') {
+            if (!$this->allowAuthenticationAttempt('signup')) {
+                return;
+            }
             $this->handleSignup();
             return;
         }
@@ -41,6 +48,21 @@ class AuthController {
         echo json_encode(['success' => false, 'message' => 'Invalid action or request method.']);
     }
 
+    private function allowAuthenticationAttempt(string $action): bool {
+        $limit = Security::consumeRateLimit('auth:' . $action, 5, 60);
+        if ($limit['allowed']) {
+            return true;
+        }
+
+        http_response_code(429);
+        header('Retry-After: ' . $limit['retry_after']);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Too many attempts. Please wait before trying again.',
+        ]);
+        return false;
+    }
+
     private function handleMe(): void {
         $userId = $_SESSION['user_id'] ?? null;
 
@@ -50,6 +72,12 @@ class AuthController {
         }
 
         $user = $this->userRepo->findById((int) $userId);
+        if ($user) {
+            $_SESSION['user_role'] = $user['role'];
+        } else {
+            unset($_SESSION['user_id'], $_SESSION['user_email'], $_SESSION['user_name'], $_SESSION['user_role']);
+        }
+
         echo json_encode([
             'success' => true,
             'data' => $user
@@ -76,6 +104,7 @@ class AuthController {
             return;
         }
 
+        session_regenerate_id(true);
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
@@ -135,6 +164,7 @@ class AuthController {
 
         $user = $this->userRepo->findById($userId);
 
+        session_regenerate_id(true);
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];

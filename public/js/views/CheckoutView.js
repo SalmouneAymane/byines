@@ -1,5 +1,7 @@
 import { CartState } from '../cart.js';
 import { i18n } from '../i18n.js';
+import { currencyStore } from '../currencyStore.js';
+import { secureFetch } from '../security.js';
 
 export const CheckoutView = {
     state: {
@@ -223,7 +225,7 @@ export const CheckoutView = {
                                         <div class="flex-1 min-w-0 text-xs">
                                             <h4 class="font-serif text-[#2C2926] truncate">${this.escapeHtml(item.name)}</h4>
                                             <span class="text-[11px] text-[#7A7672] block">Qty: ${item.quantity} ${item.color !== 'Default' ? '| ' + item.color : ''} ${item.size ? '| Size: ' + item.size : ''}</span>
-                                            <span class="text-xs font-semibold text-[#2C2926] block">$${(item.price * item.quantity).toFixed(2)}</span>
+                                            <span class="text-xs font-semibold text-[#2C2926] block">${currencyStore.formatPrice(item.price * item.quantity)}</span>
                                         </div>
                                     </div>
                                 `).join('')}
@@ -233,15 +235,15 @@ export const CheckoutView = {
                             <div class="space-y-2 text-xs border-t border-[#E5E2DC] pt-4 font-sans">
                                 <div class="flex justify-between text-[#7A7672]">
                                     <span>Subtotal</span>
-                                    <span class="font-medium text-[#2C2926]">$${subtotal.toFixed(2)}</span>
+                                    <span class="font-medium text-[#2C2926]">${currencyStore.formatPrice(subtotal)}</span>
                                 </div>
                                 <div class="flex justify-between text-[#7A7672]">
                                     <span>Moroccan Shipping</span>
-                                    <span class="font-medium text-[#2C2926]">${shippingCost === 0 ? '<strong class="text-emerald-700 font-semibold">FREE</strong>' : '$' + shippingCost.toFixed(2)}</span>
+                                    <span class="font-medium text-[#2C2926]">${shippingCost === 0 ? '<strong class="text-emerald-700 font-semibold">FREE</strong>' : currencyStore.formatPrice(shippingCost)}</span>
                                 </div>
                                 <div class="flex justify-between text-base font-serif text-[#2C2926] border-t border-[#E5E2DC] pt-3 font-normal">
                                     <span>Total Amount</span>
-                                    <span class="font-semibold">$${total.toFixed(2)}</span>
+                                    <span class="font-semibold">${currencyStore.formatPrice(total)}</span>
                                 </div>
                             </div>
                         </div>
@@ -289,7 +291,7 @@ export const CheckoutView = {
                 `;
 
                 try {
-                    const res = await fetch('/api/storefront/checkout.php', {
+                    const res = await secureFetch('/api/storefront/checkout.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -353,7 +355,7 @@ export const CheckoutView = {
 
                     <div class="flex justify-between items-center">
                         <span class="text-xs text-[#7A7672] font-medium uppercase tracking-wider">Total Payable Amount</span>
-                        <span class="font-serif font-bold text-lg text-[#2C2926]">$${parseFloat(orderData.total_amount).toFixed(2)}</span>
+                        <span class="font-serif font-bold text-lg text-[#2C2926]">${currencyStore.formatPrice(orderData.total_amount)}</span>
                     </div>
                 </div>
 

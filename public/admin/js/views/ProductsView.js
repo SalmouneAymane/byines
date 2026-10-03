@@ -1,9 +1,13 @@
+import { secureFetch } from '../../../js/security.js';
+
 export const ProductsView = {
     products: [],
     categories: [],
     collections: [],
+    loadError: false,
 
     async render() {
+        this.loadError = false;
         try {
             const [prodRes, catRes, colRes] = await Promise.all([
                 fetch('/api/admin/products.php'),
@@ -15,11 +19,21 @@ export const ProductsView = {
             const cats = await catRes.json();
             const cols = await colRes.json();
 
-            if (prods.success) this.products = prods.data;
-            if (cats.success) this.categories = cats.data;
-            if (cols.success) this.collections = cols.data;
+            const failedResponse = [prodRes, catRes, colRes].find(response => !response.ok);
+            if (failedResponse || !prods.success || !cats.success || !cols.success) {
+                const message = prods.message || cats.message || cols.message;
+                throw new Error(message || `Request failed${failedResponse ? ` with status ${failedResponse.status}` : ''}`);
+            }
+
+            this.products = prods.data;
+            this.categories = cats.data;
+            this.collections = cols.data;
         } catch (e) {
             console.error('Failed to load products data', e);
+            this.products = [];
+            this.categories = [];
+            this.collections = [];
+            this.loadError = true;
         }
 
         setTimeout(() => this.attachEvents(), 0);
@@ -46,7 +60,7 @@ export const ProductsView = {
                         <svg class="w-4 h-4 text-stone-400 absolute left-3 top-3 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </div>
                     <div class="flex items-center space-x-3 w-full sm:w-auto">
-                        <select id="filter-category" class="px-4 py-2.5 bg-[#FAF9F6] border border-line text-xs font-sans text-obsidian focus:outline-none focus:border-obsidian rounded-none">
+                        <select id="filter-category" class="w-full sm:w-auto px-4 py-2.5 bg-[#FAF9F6] border border-line text-xs font-sans text-obsidian focus:outline-none focus:border-obsidian rounded-none">
                             <option value="">All Categories</option>
                             ${this.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
                         </select>
@@ -56,13 +70,15 @@ export const ProductsView = {
                 <!-- Products Table -->
                 <div class="bg-white border border-line rounded-none overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse" id="products-table">
+                        ${this.loadError ? `
+                            <p class="py-12 px-4 text-center text-rose-600">Unable to load products. Please verify administrator access and try again.</p>
+                        ` : `<table class="w-full text-left border-collapse" id="products-table">
                             <thead>
                                 <tr class="bg-stone-50 border-b border-line text-[10px] uppercase tracking-[0.15em] text-stone-400">
                                     <th class="py-4 px-6 font-semibold">Product</th>
                                     <th class="py-4 px-6 font-semibold">SKU</th>
                                     <th class="py-4 px-6 font-semibold">Category</th>
-                                    <th class="py-4 px-6 font-semibold">Price</th>
+                                    <th class="py-4 px-6 font-semibold">Price (MAD)</th>
                                     <th class="py-4 px-6 font-semibold">Stock / Variants</th>
                                     <th class="py-4 px-6 font-semibold">Status</th>
                                     <th class="py-4 px-6 font-semibold text-right">Actions</th>
@@ -71,14 +87,14 @@ export const ProductsView = {
                             <tbody class="divide-y divide-line text-xs">
                                 ${this.renderProductRows(this.products)}
                             </tbody>
-                        </table>
+                        </table>`}
                     </div>
                 </div>
             </div>
 
             <!-- Product Add/Edit Modal -->
             <div id="product-modal" class="fixed inset-0 bg-obsidian/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-                <div class="bg-white border border-stone-900 w-full max-w-3xl max-h-[90vh] overflow-y-auto p-8 rounded-none shadow-2xl relative space-y-6">
+                <div class="bg-white border border-stone-900 w-full max-w-3xl max-h-[90dvh] overflow-y-auto p-4 sm:p-8 rounded-none shadow-2xl relative space-y-6">
                     <div class="flex items-center justify-between border-b border-line pb-4 sticky top-0 bg-white z-10">
                         <h3 id="modal-title" class="text-xl font-serif font-normal text-obsidian">Add New Product</h3>
                         <button id="btn-close-modal" class="text-stone-400 hover:text-obsidian text-lg font-bold">✕</button>
@@ -104,18 +120,18 @@ export const ProductsView = {
                                     </select>
                                 </div>
 
-                                <div class="grid grid-cols-2 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-muted mb-2">Price ($) *</label>
-                                        <input type="number" step="0.01" id="product-price" name="price" required placeholder="35.00" class="w-full px-4 py-3 bg-[#FAF9F6] border border-line text-xs font-sans text-obsidian focus:outline-none focus:border-obsidian rounded-none" />
+                                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-muted mb-2">Price (MAD) *</label>
+                                        <input type="number" step="0.01" id="product-price" name="price" required placeholder="350.00" class="w-full px-4 py-3 bg-[#FAF9F6] border border-line text-xs font-sans text-obsidian focus:outline-none focus:border-obsidian rounded-none" />
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-muted mb-2">Old Price ($)</label>
-                                        <input type="number" step="0.01" id="product-old-price" name="old_price" placeholder="45.00" class="w-full px-4 py-3 bg-[#FAF9F6] border border-line text-xs font-sans text-obsidian focus:outline-none focus:border-obsidian rounded-none" />
+                                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-muted mb-2">Old Price (MAD)</label>
+                                        <input type="number" step="0.01" id="product-old-price" name="old_price" placeholder="450.00" class="w-full px-4 py-3 bg-[#FAF9F6] border border-line text-xs font-sans text-obsidian focus:outline-none focus:border-obsidian rounded-none" />
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-2 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-muted mb-2">SKU Code</label>
                                         <input type="text" id="product-sku" name="sku" placeholder="Auto-generated if empty" class="w-full px-4 py-3 bg-[#FAF9F6] border border-line text-xs font-mono text-obsidian focus:outline-none focus:border-obsidian rounded-none" />
@@ -152,12 +168,42 @@ export const ProductsView = {
                                 <!-- Image Uploads Section -->
                                 <div>
                                     <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-muted mb-2">Product Images</label>
+                                    
+                                    <!-- Existing Saved Images (When Editing) -->
                                     <div id="existing-images-container" class="grid grid-cols-4 gap-2 mb-3 hidden">
                                         <!-- Rendered dynamically -->
                                     </div>
-                                    <div class="border border-line bg-[#FAF9F6] p-4 text-center rounded-none space-y-3">
-                                        <input type="file" id="product-files" name="images[]" multiple accept="image/jpeg,image/png,image/webp" class="block w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-3 file:rounded-none file:border-0 file:text-[10px] file:font-bold file:uppercase file:tracking-wider file:bg-obsidian file:text-white hover:file:bg-stone-800 cursor-pointer" />
-                                        <p class="text-[10px] text-stone-400">Select multiple JPG, PNG, or WEBP images.</p>
+
+                                    <!-- Drag & Drop Zone -->
+                                    <div 
+                                        id="product-dropzone" 
+                                        class="border-2 border-dashed border-stone-300 hover:border-obsidian bg-[#FAF9F6] p-5 text-center rounded-none transition-all cursor-pointer relative group"
+                                    >
+                                        <input 
+                                            type="file" 
+                                            id="product-files" 
+                                            name="images[]" 
+                                            multiple 
+                                            accept="image/jpeg,image/png,image/webp" 
+                                            class="hidden" 
+                                        />
+                                        
+                                        <div id="product-drop-placeholder" class="space-y-2">
+                                            <div class="w-9 h-9 mx-auto text-stone-400 group-hover:text-obsidian transition-colors">
+                                                <svg class="w-9 h-9 stroke-current mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                </svg>
+                                            </div>
+                                            <div class="text-xs text-stone-600 font-medium">
+                                                <span class="text-obsidian underline font-semibold">Click to browse</span> or drag and drop multiple images here
+                                            </div>
+                                            <p class="text-[10px] text-stone-400">JPG, PNG, WEBP (Select or drop multiple files)</p>
+                                        </div>
+
+                                        <!-- Queued files preview grid -->
+                                        <div id="product-files-preview" class="hidden grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-line text-left">
+                                            <!-- Queued images rendered dynamically -->
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -182,7 +228,7 @@ export const ProductsView = {
                                             <th class="py-2.5 px-4 font-semibold">Color</th>
                                             <th class="py-2.5 px-4 font-semibold">Size</th>
                                             <th class="py-2.5 px-4 font-semibold">Stock Quantity</th>
-                                            <th class="py-2.5 px-4 font-semibold">Price Mod ($)</th>
+                                            <th class="py-2.5 px-4 font-semibold">Price Mod (MAD)</th>
                                             <th class="py-2.5 px-4 font-semibold text-right">Remove</th>
                                         </tr>
                                     </thead>
@@ -242,8 +288,8 @@ export const ProductsView = {
                     <td class="py-4 px-6 font-mono text-[11px] text-stone-600">${prod.sku}</td>
                     <td class="py-4 px-6 text-stone-700">${prod.category_name || '—'}</td>
                     <td class="py-4 px-6 font-medium">
-                        <span class="text-obsidian">$${parseFloat(prod.price).toFixed(2)}</span>
-                        ${prod.old_price ? `<span class="text-stone-400 line-through text-[11px] ml-1.5">$${parseFloat(prod.old_price).toFixed(2)}</span>` : ''}
+                        <span class="text-obsidian">${parseFloat(prod.price).toFixed(2)} <span class="text-[10px] text-stone-400 font-normal">MAD</span></span>
+                        ${prod.old_price ? `<span class="text-stone-400 line-through text-[11px] ml-1.5">${parseFloat(prod.old_price).toFixed(2)} MAD</span>` : ''}
                     </td>
                     <td class="py-4 px-6">
                         <div class="space-y-1">
@@ -303,25 +349,31 @@ export const ProductsView = {
         if (categoryFilter) categoryFilter.onchange = filterProducts;
 
         // Variant row builder helper
-        const addVariantRow = (variant = { color: 'Default', size: 'M', stock_quantity: 10, price_modifier: '0.00', id: '' }) => {
+        const addVariantRow = (variant = {}) => {
+            const colorVal = variant.color !== undefined ? variant.color : '';
+            const sizeVal = variant.size !== undefined ? variant.size : 'M';
+            const stockVal = variant.stock_quantity !== undefined ? variant.stock_quantity : 10;
+            const priceModVal = variant.price_modifier !== undefined ? variant.price_modifier : '0.00';
+            const idVal = variant.id || '';
+
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-stone-50 transition-colors';
             tr.innerHTML = `
                 <td class="py-2 px-3">
-                    <input type="hidden" name="variant_ids[]" value="${variant.id || ''}" />
-                    <input type="text" name="variant_colors[]" value="${variant.color}" placeholder="Color (e.g. Black)" class="w-full px-2.5 py-1.5 bg-white border border-line text-xs rounded-none focus:outline-none focus:border-obsidian" />
+                    <input type="hidden" name="variant_ids[]" value="${idVal}" />
+                    <input type="text" name="variant_colors[]" value="${colorVal}" placeholder="Color (e.g. Black, Beige)" class="w-full px-2.5 py-1.5 bg-white border border-line text-xs rounded-none focus:outline-none focus:border-obsidian" />
                 </td>
                 <td class="py-2 px-3">
-                    <input type="text" name="variant_sizes[]" value="${variant.size}" placeholder="Size (e.g. M)" class="w-full px-2.5 py-1.5 bg-white border border-line text-xs rounded-none focus:outline-none focus:border-obsidian" />
+                    <input type="text" name="variant_sizes[]" value="${sizeVal}" placeholder="Size (e.g. M, L, 56)" class="w-full px-2.5 py-1.5 bg-white border border-line text-xs rounded-none focus:outline-none focus:border-obsidian" />
                 </td>
                 <td class="py-2 px-3">
-                    <input type="number" min="0" name="variant_stocks[]" value="${variant.stock_quantity}" class="w-full px-2.5 py-1.5 bg-white border border-line text-xs rounded-none focus:outline-none focus:border-obsidian" />
+                    <input type="number" min="0" name="variant_stocks[]" value="${stockVal}" class="w-full px-2.5 py-1.5 bg-white border border-line text-xs rounded-none focus:outline-none focus:border-obsidian" />
                 </td>
                 <td class="py-2 px-3">
-                    <input type="number" step="0.01" name="variant_price_mods[]" value="${variant.price_modifier}" class="w-full px-2.5 py-1.5 bg-white border border-line text-xs rounded-none focus:outline-none focus:border-obsidian" />
+                    <input type="number" step="0.01" name="variant_price_mods[]" value="${priceModVal}" class="w-full px-2.5 py-1.5 bg-white border border-line text-xs rounded-none focus:outline-none focus:border-obsidian" />
                 </td>
                 <td class="py-2 px-3 text-right">
-                    <button type="button" class="btn-remove-variant-row text-stone-400 hover:text-red-600 text-xs font-bold px-2">✕</button>
+                    <button type="button" class="btn-remove-variant-row text-stone-400 hover:text-red-600 text-xs font-bold px-2" title="Remove Variant">✕</button>
                 </td>
             `;
             tr.querySelector('.btn-remove-variant-row').onclick = () => tr.remove();
@@ -329,12 +381,122 @@ export const ProductsView = {
         };
 
         if (btnAddVariant) {
-            btnAddVariant.onclick = () => addVariantRow();
+            btnAddVariant.onclick = (e) => {
+                e.preventDefault();
+                addVariantRow({ color: '', size: 'M', stock_quantity: 10, price_modifier: '0.00', id: '' });
+            };
+        }
+
+        const dropzone = document.getElementById('product-dropzone');
+        const fileInput = document.getElementById('product-files');
+        const placeholder = document.getElementById('product-drop-placeholder');
+        const previewGrid = document.getElementById('product-files-preview');
+        let pendingFiles = [];
+
+        const syncFileInput = () => {
+            const dt = new DataTransfer();
+            pendingFiles.forEach(file => dt.items.add(file));
+            fileInput.files = dt.files;
+        };
+
+        const renderPendingPreviews = () => {
+            if (pendingFiles.length === 0) {
+                previewGrid.innerHTML = '';
+                previewGrid.classList.add('hidden');
+                syncFileInput();
+                return;
+            }
+
+            previewGrid.classList.remove('hidden');
+            previewGrid.innerHTML = '';
+
+            pendingFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                const card = document.createElement('div');
+                card.className = 'relative group border border-line bg-stone-100 overflow-hidden h-20 rounded-none';
+                card.innerHTML = `
+                    <img class="w-full h-full object-cover" src="" alt="${file.name}" />
+                    <div class="absolute inset-0 bg-obsidian/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center p-1 text-center transition-opacity">
+                        <span class="text-[8px] text-white font-medium truncate max-w-full px-1">${file.name}</span>
+                        <span class="text-[7px] text-stone-300">${(file.size / 1024).toFixed(0)} KB</span>
+                        <button type="button" data-remove-pending="${index}" class="text-red-400 hover:text-red-300 text-[9px] font-bold uppercase underline mt-1">✕ Remove</button>
+                    </div>
+                `;
+
+                reader.onload = (e) => {
+                    const img = card.querySelector('img');
+                    if (img) img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+
+                const removeBtn = card.querySelector('[data-remove-pending]');
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    pendingFiles.splice(index, 1);
+                    renderPendingPreviews();
+                };
+
+                previewGrid.appendChild(card);
+            });
+
+            syncFileInput();
+        };
+
+        const addFiles = (newFiles) => {
+            if (!newFiles) return;
+            for (let i = 0; i < newFiles.length; i++) {
+                const file = newFiles[i];
+                if (file.type.startsWith('image/')) {
+                    // Check duplicate
+                    const exists = pendingFiles.some(f => f.name === file.name && f.size === file.size);
+                    if (!exists) {
+                        pendingFiles.push(file);
+                    }
+                }
+            }
+            renderPendingPreviews();
+        };
+
+        if (dropzone && fileInput) {
+            dropzone.onclick = (e) => {
+                if (!e.target.closest('[data-remove-pending]')) {
+                    fileInput.click();
+                }
+            };
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.add('border-obsidian', 'bg-stone-100');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.remove('border-obsidian', 'bg-stone-100');
+                });
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                if (dt && dt.files && dt.files.length > 0) {
+                    addFiles(dt.files);
+                }
+            });
+
+            fileInput.onchange = (e) => {
+                addFiles(e.target.files);
+            };
         }
 
         const openModal = async (mode = 'create', productId = null) => {
             form.reset();
             variantBody.innerHTML = '';
+            pendingFiles = [];
+            renderPendingPreviews();
             document.getElementById('existing-images-container').classList.add('hidden');
             document.getElementById('existing-images-container').innerHTML = '';
 
@@ -396,14 +558,14 @@ export const ProductsView = {
                             imgContainer.querySelectorAll('[data-action="set-main-img"]').forEach(b => {
                                 b.onclick = async () => {
                                     const imgId = b.getAttribute('data-img-id');
-                                    await fetch(`/api/admin/products.php?action=set_main_image&id=${productId}&image_id=${imgId}`, { method: 'POST' });
+                                    await secureFetch(`/api/admin/products.php?action=set_main_image&id=${productId}&image_id=${imgId}`, { method: 'POST' });
                                     openModal('update', productId);
                                 };
                             });
                             imgContainer.querySelectorAll('[data-action="del-img"]').forEach(b => {
                                 b.onclick = async () => {
                                     const imgId = b.getAttribute('data-img-id');
-                                    await fetch(`/api/admin/products.php?action=delete_image&image_id=${imgId}`, { method: 'POST' });
+                                    await secureFetch(`/api/admin/products.php?action=delete_image&image_id=${imgId}`, { method: 'POST' });
                                     openModal('update', productId);
                                 };
                             });
@@ -464,7 +626,7 @@ export const ProductsView = {
                 formData.set('variants', JSON.stringify(variantsArray));
 
                 try {
-                    const res = await fetch('/api/admin/products.php', {
+                    const res = await secureFetch('/api/admin/products.php', {
                         method: 'POST',
                         body: formData
                     });
@@ -500,7 +662,7 @@ export const ProductsView = {
                 const name = btn.getAttribute('data-name');
                 if (confirm(`Are you sure you want to delete product "${name}"?`)) {
                     try {
-                        const res = await fetch(`/api/admin/products.php?action=delete&id=${id}`, { method: 'POST' });
+                        const res = await secureFetch(`/api/admin/products.php?action=delete&id=${id}`, { method: 'POST' });
                         const result = await res.json();
                         if (result.success) {
                             window.location.reload();

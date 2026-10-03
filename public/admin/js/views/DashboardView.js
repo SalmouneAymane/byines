@@ -21,17 +21,17 @@ export const DashboardView = {
         return `
             <div class="space-y-10">
                 <!-- Welcome Editorial Banner (Monochromatic Black Banner, Pure White Typography) -->
-                <div class="bg-obsidian p-10 text-white border border-stone-900 rounded-none flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                <div class="bg-obsidian p-5 sm:p-10 text-white border border-stone-900 rounded-none flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                     <div>
                         <span class="text-[11px] uppercase tracking-[0.2em] text-stone-400 font-semibold block">Overview & Analytics</span>
-                        <h1 class="text-3xl font-serif font-normal tracking-wide mt-2 text-white">Storefront Dashboard</h1>
+                        <h1 class="text-2xl sm:text-3xl font-serif font-normal tracking-wide mt-2 text-white">Storefront Dashboard</h1>
                         <p class="text-stone-400 text-xs mt-1 leading-relaxed">Manage catalog items, active collections, stock inventory, and customer orders.</p>
                     </div>
-                    <div class="flex gap-4">
-                        <a href="#products" class="bg-white hover:bg-stone-200 text-obsidian font-bold text-[11px] uppercase tracking-[0.15em] px-6 py-3.5 rounded-none transition-colors border border-white">
+                    <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:gap-4">
+                        <a href="#products" class="text-center bg-white hover:bg-stone-200 text-obsidian font-bold text-[11px] uppercase tracking-[0.15em] px-4 sm:px-6 py-3.5 rounded-none transition-colors border border-white">
                             + Add Product
                         </a>
-                        <a href="#categories" class="bg-transparent hover:bg-stone-800 text-white border border-stone-700 font-semibold text-[11px] uppercase tracking-[0.15em] px-6 py-3.5 rounded-none transition-colors">
+                        <a href="#categories" class="text-center bg-transparent hover:bg-stone-800 text-white border border-stone-700 font-semibold text-[11px] uppercase tracking-[0.15em] px-4 sm:px-6 py-3.5 rounded-none transition-colors">
                             Manage Categories
                         </a>
                     </div>
@@ -99,7 +99,7 @@ export const DashboardView = {
                 ` : ''}
 
                 <!-- Setup Architecture Guide -->
-                <div class="bg-white p-8 border border-line rounded-none">
+                <div class="bg-white p-5 sm:p-8 border border-line rounded-none">
                     <h3 class="text-xl font-serif font-normal text-obsidian mb-6">Architecture Setup Overview</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="p-6 bg-[#F9F9F9] border border-line rounded-none">

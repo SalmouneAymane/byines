@@ -1,3 +1,5 @@
+import { secureFetch } from '../../../js/security.js';
+
 export const OrdersView = {
 
     state: {
@@ -66,12 +68,12 @@ export const OrdersView = {
             <div class="space-y-8 font-sans" id="orders-view-root">
 
                 <!-- Page Title -->
-                <div class="flex items-end justify-between border-b border-line pb-5">
+                <div class="flex flex-col items-start justify-between gap-2 border-b border-line pb-5 sm:flex-row sm:items-end">
                     <div>
                         <span class="text-[10px] uppercase tracking-[0.2em] text-muted font-semibold block mb-1">Store Management</span>
                         <h1 class="text-2xl font-serif font-normal text-obsidian">Customer Orders</h1>
                     </div>
-                    <div class="text-[11px] text-muted font-medium">
+                    <div class="text-[11px] text-muted font-medium sm:text-right">
                         ${stats.total} orders total &mdash; ${new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric'})}
                     </div>
                 </div>
@@ -114,7 +116,7 @@ export const OrdersView = {
                     </div>
                     <select 
                         id="order-status-filter"
-                        class="bg-[#F9F9F9] border border-line text-xs text-obsidian px-4 py-2.5 focus:outline-none focus:border-obsidian rounded-none min-w-[160px]"
+                        class="w-full sm:w-auto bg-[#F9F9F9] border border-line text-xs text-obsidian px-4 py-2.5 focus:outline-none focus:border-obsidian rounded-none min-w-[160px]"
                     >
                         <option value="all" ${this.state.filterStatus === 'all' ? 'selected' : ''}>All Statuses</option>
                         <option value="pending" ${this.state.filterStatus === 'pending' ? 'selected' : ''}>Pending</option>
@@ -512,7 +514,7 @@ export const OrdersView = {
         msgEl.classList.add('hidden');
 
         try {
-            const res = await fetch(`/api/admin/orders.php?id=${orderId}`, {
+            const res = await secureFetch(`/api/admin/orders.php?id=${orderId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })

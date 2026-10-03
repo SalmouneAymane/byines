@@ -8,8 +8,8 @@ export const HeaderComponent = {
             <header class="bg-white border-b border-[#E5E2DC] sticky top-0 z-40">
                 <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
                     <!-- Left: Brand Logo -->
-                    <a href="#home" class="text-2xl md:text-3xl font-serif text-[#2C2926] tracking-tight font-normal">
-                        Byines
+                    <a href="#home" aria-label="Byines Homepage" class="flex items-center">
+                        <img src="/public/assets/logo/logo.svg" alt="Byines" class="h-9 md:h-11 w-auto object-contain transition-opacity hover:opacity-75" />
                     </a>
 
                     <!-- Center: Navigation Links -->
@@ -19,8 +19,13 @@ export const HeaderComponent = {
                         <a href="#about" data-nav-link="about" class="hover:opacity-60 transition-opacity">ABOUT</a>
                     </nav>
 
-                    <!-- Right: Action Icons -->
-                    <div class="flex items-center space-x-5 text-[#2C2926]">
+                    <!-- Right: Action Icons, Language & Currency Selectors -->
+                    <div class="flex items-center space-x-2 sm:space-x-4 text-[#2C2926]">
+                        <!-- Language Selector Dropdown -->
+                        <div id="header-lang-selector" class="pr-1 sm:pr-2 border-r border-[#E5E2DC]"></div>
+                        <!-- Currency Selector Dropdown -->
+                        <div id="header-currency-selector" class="pr-1 sm:pr-2 border-r border-[#E5E2DC]"></div>
+
                         <!-- Search Icon Button -->
                         <button id="btn-toggle-search" aria-label="Search catalog" class="p-1 hover:opacity-60 transition-opacity">
                             <svg class="w-5 h-5 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>

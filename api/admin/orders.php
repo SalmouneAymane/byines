@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../bootstrap.php';
+
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/check_auth.php';
@@ -57,11 +59,6 @@ try {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
 
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Internal server error',
-        'error'   => $e->getMessage()
-    ]);
+} catch (Throwable $e) {
+    \App\Security\Security::handleCaughtApiException($e);
 }

@@ -1,5 +1,12 @@
 <?php
 
+require_once __DIR__ . '/../bootstrap.php';
+
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === realpath(__FILE__)) {
+    http_response_code(404);
+    exit;
+}
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

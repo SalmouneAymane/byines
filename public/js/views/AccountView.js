@@ -1,4 +1,6 @@
 import { AuthState } from '../components/AuthModal.js';
+import { secureFetch } from '../security.js';
+import { currencyStore } from '../currencyStore.js';
 
 export const AccountView = {
     state: {
@@ -191,7 +193,7 @@ export const AccountView = {
 
                                 <div class="text-left sm:text-right">
                                     <span class="text-[11px] text-[#7A7672] uppercase tracking-wider block">Total Amount</span>
-                                    <span class="font-serif text-lg font-semibold text-[#2C2926]">$${parseFloat(o.total_amount).toFixed(2)}</span>
+                                    <span class="font-serif text-lg font-semibold text-[#2C2926]">${currencyStore.formatPrice(o.total_amount)}</span>
                                 </div>
                             </div>
 
@@ -205,7 +207,7 @@ export const AccountView = {
                                         <div class="min-w-0 flex-1 text-xs">
                                             <h5 class="font-serif text-[#2C2926] truncate">${this.escapeHtml(item.product_name)}</h5>
                                             <span class="text-[11px] text-[#7A7672] block">Qty: ${item.quantity} ${item.color !== 'Default' ? '| ' + item.color : ''} ${item.size ? '| Size: ' + item.size : ''}</span>
-                                            <span class="font-semibold text-[#2C2926] block mt-0.5">$${parseFloat(item.price).toFixed(2)}</span>
+                                            <span class="font-semibold text-[#2C2926] block mt-0.5">${currencyStore.formatPrice(item.price)}</span>
                                         </div>
                                     </div>
                                 `).join('')}
@@ -341,7 +343,7 @@ export const AccountView = {
                 };
 
                 try {
-                    const res = await fetch('/api/storefront/account.php?action=update_profile', {
+                    const res = await secureFetch('/api/storefront/account.php?action=update_profile', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)

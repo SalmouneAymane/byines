@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../bootstrap.php';
+
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/check_auth.php';
@@ -13,11 +15,6 @@ try {
     $db = Database::getInstance()->getConnection();
     $controller = new AdminStatsController($db);
     $controller->handleRequest();
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Failed to load admin stats',
-        'error'   => $e->getMessage()
-    ]);
+} catch (Throwable $e) {
+    \App\Security\Security::handleCaughtApiException($e, 'Failed to load admin stats');
 }

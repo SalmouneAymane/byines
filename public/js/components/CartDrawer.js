@@ -1,5 +1,6 @@
 import { CartState } from '../cart.js';
 import { i18n } from '../i18n.js';
+import { currencyStore } from '../currencyStore.js';
 
 export const CartDrawer = {
     isOpen: false,
@@ -120,10 +121,10 @@ export const CartDrawer = {
                 <div class="space-y-1.5 pt-1">
                     <div class="text-[11px] font-sans text-[#7A7672] flex justify-between">
                         ${amountAway > 0 
-                            ? `<span>${i18n.t('cart.free_shipping_needed', { amount: amountAway.toFixed(2) })}</span>` 
+                            ? `<span>${i18n.t('cart.free_shipping_needed', { amount: currencyStore.formatPrice(amountAway) })}</span>` 
                             : `<span class="text-emerald-700 font-semibold">${i18n.t('cart.free_shipping_unlocked')}</span>`
                         }
-                        <span>$${subtotal.toFixed(0)} / $${this.FREE_SHIPPING_THRESHOLD}</span>
+                        <span>${currencyStore.formatPrice(subtotal)} / ${currencyStore.formatPrice(this.FREE_SHIPPING_THRESHOLD)}</span>
                     </div>
                     <div class="w-full bg-[#EFECE6] h-1.5 overflow-hidden">
                         <div class="bg-[#2C2926] h-full transition-all duration-500 ease-out" style="width: ${progressPct}%"></div>
@@ -197,7 +198,7 @@ export const CartDrawer = {
                                             >+</button>
                                         </div>
                                         <span class="text-xs font-semibold text-[#2C2926] font-sans">
-                                            $${(item.price * item.quantity).toFixed(2)}
+                                            ${currencyStore.formatPrice(item.price * item.quantity)}
                                         </span>
                                     </div>
                                 </div>
@@ -213,7 +214,7 @@ export const CartDrawer = {
                     <div class="space-y-1">
                         <div class="flex items-center justify-between text-sm">
                             <span class="font-serif text-[#2C2926]">${i18n.t('cart.subtotal')}</span>
-                            <span class="font-serif font-medium text-lg text-[#2C2926]">$${subtotal.toFixed(2)}</span>
+                            <span class="font-serif font-medium text-lg text-[#2C2926]">${currencyStore.formatPrice(subtotal)}</span>
                         </div>
                         <p class="text-[11px] text-[#7A7672]">
                             ${i18n.t('cart.tax_shipping_note')}

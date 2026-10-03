@@ -8,6 +8,7 @@ import { CartDrawer } from './components/CartDrawer.js';
 import { AuthModal } from './components/AuthModal.js';
 import { i18n } from './i18n.js';
 import { CartState } from './cart.js';
+import { currencyStore } from './currencyStore.js';
 
 // Temporary module placeholders to be expanded in upcoming micro-phases
 const PlaceholderView = (title, description) => ({
@@ -31,6 +32,7 @@ export class StorefrontRouter {
         window.addEventListener('hashchange', () => this.handleRoute());
         window.addEventListener('cart-updated', () => this.updateCartBadge());
         window.addEventListener('language-changed', () => this.handleRoute());
+        window.addEventListener('currency-changed', () => this.handleRoute());
     }
 
     async handleRoute() {
@@ -103,6 +105,7 @@ export class StorefrontRouter {
 
     init() {
         i18n.init();
+        currencyStore.init();
         CartDrawer.init();
         AuthModal.init();
         this.handleRoute();

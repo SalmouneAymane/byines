@@ -1,5 +1,13 @@
 <?php
 
+require_once __DIR__ . '/bootstrap.php';
+
+if (\App\Security\Security::isProduction()) {
+    http_response_code(404);
+    echo json_encode(['success' => false, 'message' => 'Not found']);
+    exit;
+}
+
 header('Content-Type: application/json; charset=utf-8');
 
 // Autoload / Include Config
@@ -33,11 +41,6 @@ try {
         'timestamp' => date('Y-m-d H:i:s')
     ], JSON_PRETTY_PRINT);
 
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database connection failed.',
-        'error'   => $e->getMessage()
-    ], JSON_PRETTY_PRINT);
+} catch (Throwable $e) {
+    \App\Security\Security::handleCaughtApiException($e, 'Database connection failed.');
 }
